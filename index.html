@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zenith — Focus Timer</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="ambient">
+    <div class="ambient-orb orb1"></div>
+    <div class="ambient-orb orb2"></div>
+    <div class="ambient-orb orb3"></div>
+    <div class="particles" id="particles"></div>
+  </div>
+
+  <!-- Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══════════════ APP ══════════════ -->
+  <div class="app">
+
+    <!-- ── HEADER ── -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">◎</div>
+        <div>
+          <div class="brand-name">Zenith</div>
+          <div class="brand-sub">Focus. Rest. Repeat.</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="streak-badge" id="streakBadge" title="Current streak">
+          🔥 <span id="streakCount">0</span> day streak
+        </div>
+        <button class="icon-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+      </div>
+    </header>
+
+    <!-- ── MOOD BAR ── -->
+    <div class="mood-bar">
+      <span class="mood-label">Today's mood:</span>
+      <div class="mood-btns">
+        <button class="mood-btn" data-mood="focused" onclick="setMood(this)" title="Focused">🎯</button>
+        <button class="mood-btn" data-mood="tired" onclick="setMood(this)" title="Tired">😴</button>
+        <button class="mood-btn" data-mood="motivated" onclick="setMood(this)" title="Motivated">⚡</button>
+        <button class="mood-btn" data-mood="creative" onclick="setMood(this)" title="Creative">🎨</button>
+        <button class="mood-btn" data-mood="stressed" onclick="setMood(this)" title="Stressed">😤</button>
+        <button class="mood-btn" data-mood="calm" onclick="setMood(this)" title="Calm">🌿</button>
+      </div>
+    </div>
+
+    <!-- ── MAIN LAYOUT ── -->
+    <div class="main-layout">
+
+      <!-- LEFT PANEL -->
+      <aside class="left-panel">
+
+        <!-- Motivational Quote -->
+        <div class="quote-card" id="quoteCard">
+          <div class="quote-icon">✦</div>
+          <p class="quote-text" id="quoteText">Loading wisdom...</p>
+          <p class="quote-author" id="quoteAuthor">—</p>
+          <button class="quote-refresh" onclick="nextQuote()" title="New quote">↻</button>
+        </div>
+
+        <!-- Task List -->
+        <div class="panel-card tasks-card">
+          <div class="card-header">
+            <h3 class="card-title">📋 Tasks</h3>
+            <span class="task-count" id="taskCount">0/0</span>
+          </div>
+          <div class="task-input-row">
+            <input type="text" id="taskInput" class="task-input" placeholder="Add a task..." maxlength="60"/>
+            <button class="add-task-btn" onclick="addTask()">+</button>
+          </div>
+          <div class="task-list" id="taskList">
+            <div class="task-empty">No tasks yet. Add one above! ✨</div>
+          </div>
+        </div>
+
+        <!-- Background Sounds -->
+        <div class="panel-card sounds-card">
+          <div class="card-header">
+            <h3 class="card-title">🎵 Ambience</h3>
+            <div class="volume-row">
+              <span class="vol-icon">🔊</span>
+              <input type="range" id="ambienceVol" min="0" max="1" step="0.05" value="0.4" class="vol-slider" oninput="setAmbienceVolume(this.value)"/>
+            </div>
+          </div>
+          <div class="sounds-grid">
+            <button class="sound-btn" data-sound="rain" onclick="toggleSound('rain', this)">🌧 Rain</button>
+            <button class="sound-btn" data-sound="forest" onclick="toggleSound('forest', this)">🌿 Forest</button>
+            <button class="sound-btn" data-sound="cafe" onclick="toggleSound('cafe', this)">☕ Café</button>
+            <button class="sound-btn" data-sound="waves" onclick="toggleSound('waves', this)">🌊 Waves</button>
+            <button class="sound-btn" data-sound="fire" onclick="toggleSound('fire', this)">🔥 Fire</button>
+            <button class="sound-btn" data-sound="wind" onclick="toggleSound('wind', this)">💨 Wind</button>
+          </div>
+          <!-- Lofi embed -->
+          <div class="lofi-section">
+            <div class="lofi-label">📻 Lo-fi Radio</div>
+            <iframe
+              src="https://open.spotify.com/embed/playlist/37i9dQZF1DWWQRwui0ExPn?utm_source=generator&theme=0"
+              width="100%" height="80" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy" class="spotify-embed">
+            </iframe>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- CENTER PANEL — TIMER -->
+      <main class="center-panel">
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="pomodoro" onclick="setTimerMode('pomodoro', this)">Focus</button>
+          <button class="mode-tab" data-mode="short" onclick="setTimerMode('short', this)">Short Break</button>
+          <button class="mode-tab" data-mode="long" onclick="setTimerMode('long', this)">Long Break</button>
+        </div>
+
+        <!-- Timer Ring -->
+        <div class="timer-wrap">
+          <div class="timer-glow" id="timerGlow"></div>
+          <svg class="timer-ring" viewBox="0 0 300 300" width="300" height="300">
+            <!-- Background ring -->
+            <circle cx="150" cy="150" r="130" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="8"/>
+            <!-- Progress ring -->
+            <circle
+              id="progressRing"
+              cx="150" cy="150" r="130"
+              fill="none"
+              stroke="url(#ringGradient)"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="816.81"
+              stroke-dashoffset="0"
+              transform="rotate(-90 150 150)"
+            />
+            <!-- Gradient def -->
+            <defs>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#F59E0B"/>
+                <stop offset="100%" style="stop-color:#FBBF24"/>
+              </linearGradient>
+            </defs>
+            <!-- Dot on ring end -->
+            <circle id="ringDot" cx="150" cy="20" r="6" fill="#FBBF24" filter="url(#dotGlow)"/>
+            <defs>
+              <filter id="dotGlow">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+          </svg>
+
+          <!-- Timer face -->
+          <div class="timer-face">
+            <div class="session-label" id="sessionLabel">SESSION 1</div>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-status" id="timerStatus">Ready to focus</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="timer-controls">
+          <button class="ctrl-icon-btn" onclick="skipSession()" title="Skip">⏭</button>
+          <button class="main-btn" id="mainBtn" onclick="toggleTimer()">▶ Start</button>
+          <button class="ctrl-icon-btn" onclick="resetTimer()" title="Reset">↺</button>
+        </div>
+
+        <!-- Session dots -->
+        <div class="session-dots" id="sessionDots"></div>
+
+        <!-- Active task -->
+        <div class="active-task-bar" id="activeTaskBar">
+          <span class="active-task-icon">🎯</span>
+          <span class="active-task-text" id="activeTaskText">No task selected — pick one from the list</span>
+        </div>
+
+      </main>
+
+      <!-- RIGHT PANEL -->
+      <aside class="right-panel">
+
+        <!-- Today's Stats -->
+        <div class="panel-card stats-card">
+          <div class="card-header">
+            <h3 class="card-title">📊 Today's Stats</h3>
+            <button class="reset-stats-btn" onclick="resetStats()">Reset</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-val" id="statSessions">0</div>
+              <div class="stat-lbl">Sessions</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="statMinutes">0</div>
+              <div class="stat-lbl">Minutes</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="statTasks">0</div>
+              <div class="stat-lbl">Tasks Done</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="statStreak">0</div>
+              <div class="stat-lbl">Best Streak</div>
+            </div>
+          </div>
+          <!-- Weekly bar chart -->
+          <div class="weekly-chart">
+            <div class="weekly-label">This Week</div>
+            <div class="weekly-bars" id="weeklyBars"></div>
+            <div class="weekly-days" id="weeklyDays"></div>
+          </div>
+        </div>
+
+        <!-- Notification sound picker -->
+        <div class="panel-card sound-picker-card">
+          <div class="card-header">
+            <h3 class="card-title">🔔 Alert Sound</h3>
+            <div class="volume-row">
+              <span class="vol-icon">🔊</span>
+              <input type="range" id="alertVol" min="0" max="1" step="0.05" value="0.7" class="vol-slider"/>
+            </div>
+          </div>
+          <div class="alert-sounds">
+            <label class="alert-option active" data-sound="bell">
+              <input type="radio" name="alertSound" value="bell" checked/> 🔔 Bell
+            </label>
+            <label class="alert-option" data-sound="chime">
+              <input type="radio" name="alertSound" value="chime"/> 🎵 Chime
+            </label>
+            <label class="alert-option" data-sound="digital">
+              <input type="radio" name="alertSound" value="digital"/> 📟 Digital
+            </label>
+            <label class="alert-option" data-sound="nature">
+              <input type="radio" name="alertSound" value="nature"/> 🐦 Birds
+            </label>
+            <label class="alert-option" data-sound="soft">
+              <input type="radio" name="alertSound" value="soft"/> 🌙 Soft
+            </label>
+          </div>
+          <button class="preview-btn" onclick="previewAlertSound()">▶ Preview Sound</button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="panel-card settings-card" id="settingsCard" style="display:none">
+          <div class="card-header">
+            <h3 class="card-title">⚙ Settings</h3>
+            <button class="close-btn" onclick="toggleSettings()">✕</button>
+          </div>
+          <div class="settings-grid">
+            <label class="setting-row">
+              <span>Focus (min)</span>
+              <input type="number" id="setFocus" value="25" min="1" max="90" class="setting-input"/>
+            </label>
+            <label class="setting-row">
+              <span>Short Break (min)</span>
+              <input type="number" id="setShort" value="5" min="1" max="30" class="setting-input"/>
+            </label>
+            <label class="setting-row">
+              <span>Long Break (min)</span>
+              <input type="number" id="setLong" value="15" min="1" max="60" class="setting-input"/>
+            </label>
+            <label class="setting-row">
+              <span>Sessions before long break</span>
+              <input type="number" id="setSessions" value="4" min="1" max="8" class="setting-input"/>
+            </label>
+            <label class="setting-row toggle-row">
+              <span>Auto-start breaks</span>
+              <div class="toggle" id="toggleBreak" onclick="this.classList.toggle('on')"></div>
+            </label>
+            <label class="setting-row toggle-row">
+              <span>Browser notifications</span>
+              <div class="toggle" id="toggleNotif" onclick="requestNotifPermission(this)"></div>
+            </label>
+          </div>
+          <button class="save-settings-btn" onclick="saveSettings()">Save Settings</button>
+        </div>
+
+        <!-- Pomodoro Guide -->
+        <div class="panel-card guide-card">
+          <div class="card-header">
+            <h3 class="card-title">💡 The Technique</h3>
+          </div>
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="guide-num">1</div>
+              <div class="guide-text">Pick a task and add it to your list</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-num">2</div>
+              <div class="guide-text">Focus for 25 minutes — no distractions</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-num">3</div>
+              <div class="guide-text">Take a 5-minute break to refresh</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-num">4</div>
+              <div class="guide-text">After 4 sessions, take a 15-min long break</div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-num">5</div>
+              <div class="guide-text">Repeat. Your focus gets stronger every day! 🧠</div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- Session Complete Modal -->
+  <div class="modal-overlay hidden" id="sessionModal">
+    <div class="modal-box">
+      <div class="modal-emoji" id="modalEmoji">🎉</div>
+      <h2 class="modal-title" id="modalTitle">Session Complete!</h2>
+      <p class="modal-msg" id="modalMsg">Great work! Take a well-deserved break.</p>
+      <div class="modal-stats">
+        <div class="modal-stat"><span id="modalSessions">0</span><small>Sessions today</small></div>
+        <div class="modal-stat"><span id="modalMinutes">0</span><small>Minutes focused</small></div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" id="modalNextBtn" onclick="startNext()">Start Break →</button>
+        <button class="modal-btn" onclick="closeModal()">Stay Here</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
